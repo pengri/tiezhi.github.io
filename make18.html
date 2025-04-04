@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>18格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            position: relative;
+            height: 70vw;
+        }
+        .container>* {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        #imgin {
+            position: absolute;
+        }
+        .btns {
+            margin: 10px;
+        }
+        #inputs {
+            margin: 20px;
+        }
+        #inputs p {
+            margin: 10px 0;
+        }
+        #inputs input {
+            height: 2em;
+        }
+        .btns button {
+            padding: 2em;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+        .btn-up {
+            background: linear-gradient(0deg, #0033ff, #0099ff);
+        }
+        .btn-make {
+            background: linear-gradient(0deg, #cc9900, #cccc00);
+        }
+        .btn-clear {
+            background: linear-gradient(0deg, #669900, #66cc00);
+        }
+        .btn-back {
+            background: linear-gradient(0deg, #cc3300, #cc6600);
+        }
+        @font-face {
+            font-family: 'simhei';
+            src: url('./simhei.ttf');
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="18.png" alt="" style="width: 100vw;" id="img">
+        <canvas width="827" height="585" id="canvas" style="width: 100vw;height: auto;"></canvas>
+        <div id="img_container" style="width: 100vw; height: 50vw;">
+            <img src="" id="imgin">
+        </div>
+    </div>
+    
+    <div>
+        <input type="file" id="file" style="display: none;" accept="image/*">
+        <div id="inputs">
+           <form id="form1">
+            <p>货号：<input type="text" id="text"></p>
+            <p>颜色：<input type="text" id="color"></p>
+           </form>
+        </div>
+        <div class="btns">
+            <button class="btn-up" onclick="javascript:document.getElementById('file').click()">上传图片</button>
+            <button class="btn-make" onclick="make()">制作</button>
+            <button class="btn-clear" onclick="javascript:makeclear()">清空</button>
+            <button class="btn-back" onclick="javascript:location.href='./index.html'">返回</button>
+        </div>
+        
+    </div>
+    <div>
+        <img src="" alt="" id="imgDownload" style="width: 100vw;height: auto;">
+    </div>
+    <script>
+        let form1 = document.getElementById('form1');
+        let txt = document.getElementById("text");
+        let color = document.getElementById('color');
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext('2d')
+        let img = document.getElementById("img");
+        let imgin = document.getElementById("imgin");
+        let file = document.getElementById("file");
+        let imgDownload = document.getElementById('imgDownload');
+        let w = canvas.width;
+        let h = canvas.height;
+
+        let canvas1 = document.createElement('canvas');
+        canvas1.width = w * 3;
+        canvas1.height = h * 6;
+        let ctx1 = canvas1.getContext('2d');
+
+        let touchTooll = {
+            touch: 0,
+            dist: 0,
+            pos: {x: 0, y: 0}
+        }
+        let fileReader = new FileReader();
+        
+        file.oninput = e => {
+            let f = e.target.files[0];
+            fileReader.readAsDataURL(f);
+        }
+        fileReader.onloadend = e => {
+            imgin.src = e.target.result;
+            imgin.style.width = '30vw';
+            imgin.style.height = 'auto';
+            imgin.style.left = '10vw'
+            imgin.style.top = '10vw';
+        }
+
+        
+        imgin.ontouchstart = e => {
+            touchTooll.touch = e.touches.length;
+            if (touchTooll.touch === 2) {
+                let x1 = e.touches[0].clientX;
+                let x2 = e.touches[1].clientX;
+                let y1 = e.touches[0].clientY;
+                let y2 = e.touches[1].clientY;
+                touchTooll.dist = Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
+            }
+            setPosition(e)
+        }
+        document.ontouchcancel = document.ontouchend = e => {
+            setPosition(e)
+            touchTooll.touch = e.touches.length;
+        }
+
+        function setPosition (e) {
+            if (e.touches.length !== 1) return;
+            touchTooll.pos.x = e.touches[0].clientX;
+            touchTooll.pos.y = e.touches[0].clientY;
+        }
+
+        imgin.ontouchmove = e => {
+            if (touchTooll.touch === 2) {
+                let x1 = e.touches[0].clientX;
+                let x2 = e.touches[1].clientX;
+                let y1 = e.touches[0].clientY;
+                let y2 = e.touches[1].clientY;
+                let dist = Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
+                if (dist - touchTooll.dist > 10) {
+                    imgin.style.width = imgin.width + 1 + 'px'
+                }
+                if (dist - touchTooll.dist < -10) {
+                    imgin.style.width = imgin.width - 1 + 'px'
+                }
+            }
+            if (touchTooll.touch === 1) {
+                console.length
+                imgin.style.left = imgin.offsetLeft + (e.touches[0].clientX - touchTooll.pos.x) + 'px'
+                imgin.style.top = imgin.offsetTop + (e.touches[0].clientY - touchTooll.pos.y) + 'px'
+                setPosition(e)
+            }
+        }
+
+
+        function make() {
+            ctx.drawImage(img,0,0)
+            ctx.drawImage(imgin, getScaleValue(imgin.offsetLeft), getScaleValue(imgin.offsetTop), getScaleValue(imgin.offsetWidth), getScaleValue(imgin.offsetHeight))
+            
+            let text = (txt.value || '').trim();
+            let colorText = (color.value || '').trim();
+            if (colorText.length <= 2) colorText = '颜色 '+colorText;
+            else if(/\ /.test(colorText)) colorText = colorText.split(/\ +/).join(' ');
+            text = text + '  '+colorText
+            if (text) {
+                ctx.font = "normal normal bolder 44px 'simhei'";
+                let font_width = ctx.measureText(text).width;
+                let font_height = 44;
+                let canvasText = document.createElement('canvas');
+                canvasText.width = Math.ceil(font_width);
+                canvasText.height = 50;
+                let ctxText = canvasText.getContext('2d');
+                ctxText.font = "normal normal bolder 44px 'simhei'";
+                // 设置颜色
+                ctxText.fillStyle = "#000000";
+                // 设置水平对齐方式
+                ctxText.textAlign = "center";
+                // 设置垂直对齐方式
+                ctxText.textBaseline = "middle";
+                // 绘制文字（参数：要写的字，x坐标，y坐标）
+                ctxText.fillText(text, font_width/2, 25);
+                ctx.drawImage(canvasText, 494, 240, 266, 44);
+            }
+
+
+
+
+            
+            
+
+
+            ctx1.drawImage(canvas, 0, 0);
+            ctx1.drawImage(canvas, w, 0);
+            ctx1.drawImage(canvas, w*2, 0);
+            ctx1.drawImage(canvas, 0, h);
+            ctx1.drawImage(canvas, w, h);
+            ctx1.drawImage(canvas, w*2, h);
+            ctx1.drawImage(canvas, 0, h*2);
+            ctx1.drawImage(canvas, w, h*2);
+            ctx1.drawImage(canvas, w*2, h*2);
+            ctx1.drawImage(canvas, 0, h*3);
+            ctx1.drawImage(canvas, w, h*3);
+            ctx1.drawImage(canvas, w*2, h*3);
+            ctx1.drawImage(canvas, 0, h*4);
+            ctx1.drawImage(canvas, w, h*4);
+            ctx1.drawImage(canvas, w*2, h*4);
+            ctx1.drawImage(canvas, 0, h*5);
+            ctx1.drawImage(canvas, w, h*5);
+            ctx1.drawImage(canvas, w*2, h*5);
+            
+            
+            imgDownload.src = canvas1.toDataURL('image/png');
+        }
+
+        function getScaleValue(pxValue) {
+            return pxValue * img.naturalWidth / img.offsetWidth;
+        }
+
+        function makeclear () {
+            form1.reset()
+            imgDownload.src = ""
+            ctx.clearRect(0,0,canvas.width,canvas.height); 
+            imgin.src = '';
+        }
+
+        
+    </script>
+</body>
+</html>
